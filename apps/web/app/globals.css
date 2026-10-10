@@ -184,6 +184,19 @@ a {
   font-size: 0.9rem;
 }
 
+.dashboard-footer {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.dashboard-footer a {
+  color: var(--accent);
+}
+
 .tabnav {
   display: flex;
   gap: 4px;

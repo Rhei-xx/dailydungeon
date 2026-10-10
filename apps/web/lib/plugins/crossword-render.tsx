@@ -1,5 +1,6 @@
 import { formatIsoDate, type CrosswordClue, type CrosswordPuzzle } from "@dailyscribe/core";
-import { Document, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import { Document, Link, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import { BUY_ME_A_COFFEE_URL } from "@/lib/site";
 
 const styles = StyleSheet.create({
   page: { paddingTop: 36, paddingBottom: 36, paddingHorizontal: 40, fontFamily: "Helvetica", color: "#111111" },
@@ -24,6 +25,7 @@ const styles = StyleSheet.create({
   },
   clueLine: { fontSize: 7.5, lineHeight: 1.35, marginBottom: 2 },
   footer: { position: "absolute", bottom: 20, left: 40, right: 40, fontSize: 7.5, color: "#888888", textAlign: "center" },
+  coffee: { fontSize: 9, color: "#888888", marginBottom: 10 },
   spacerText: { fontSize: 11, color: "#888888", textAlign: "center", marginTop: 260, fontFamily: "Helvetica-Oblique" },
 });
 
@@ -157,6 +159,11 @@ function CrosswordDocument({
         <Text style={styles.masthead}>{masthead}</Text>
         <Text style={styles.date}>{dateFormatted}</Text>
         {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+        {!digest && (
+          <Link src={BUY_ME_A_COFFEE_URL} style={styles.coffee}>
+            Enjoy this with your coffee? Consider buying the creator one, it helps cover the running costs.
+          </Link>
+        )}
         <CrosswordGrid puzzle={puzzle} reveal={false} maxHeight={330} />
         <ClueColumns clues={puzzle.clues} />
         {footer}

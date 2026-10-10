@@ -1,4 +1,4 @@
-import { CONTACT_EMAIL, OWNER_NAME, SIGN_IN_URL } from "@/lib/site";
+import { BUY_ME_A_COFFEE_URL, CONTACT_EMAIL, OWNER_NAME, SIGN_IN_URL } from "@/lib/site";
 
 // Shared across the landing page and the legal pages so the Privacy / Terms
 // links and the ownership line appear identically everywhere.
@@ -28,6 +28,9 @@ export function SiteFooter() {
             <h4>Account</h4>
             <a href="/#open-source">Open Source</a>
             <a href={SIGN_IN_URL}>Sign In</a>
+            <a href={BUY_ME_A_COFFEE_URL} target="_blank" rel="noopener">
+              Buy Me a Coffee
+            </a>
           </div>
           <div className="footer-col">
             <h4>Info</h4>

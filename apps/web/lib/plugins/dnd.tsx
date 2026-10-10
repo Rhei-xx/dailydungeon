@@ -12,7 +12,7 @@ import {
   type RunContext,
   type ServicePlugin,
 } from "@dailyscribe/core";
-import { Document, Line, Page, Rect, StyleSheet, Svg, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import { Document, Line, Link, Page, Rect, StyleSheet, Svg, Text, View, renderToBuffer } from "@react-pdf/renderer";
 import {
   DND_MOVE_CHECKBOXES,
   DND_MOVE_EXIT_SLOTS,
@@ -20,6 +20,7 @@ import {
   moveExitOptions,
   type DndFieldBox,
 } from "@/lib/dnd/layout";
+import { BUY_ME_A_COFFEE_URL } from "@/lib/site";
 
 const MAIL_BACK_ADDRESS = "my@dailyscribe.ca";
 const CELL_SIZE = 30;
@@ -46,6 +47,7 @@ const styles = StyleSheet.create({
   monsterName: { fontSize: 10, fontFamily: "Helvetica-Bold" },
   monsterMeta: { fontSize: 9, color: "#555555" },
   hint: { fontSize: 8.5, color: "#777777", marginTop: 6, lineHeight: 1.35 },
+  coffee: { fontSize: 9, color: "#888888", marginBottom: 10 },
   checkboxRow: { flexDirection: "row", alignItems: "center", marginBottom: 7, width: "50%" },
   checkboxLabel: { fontSize: 9.5, marginLeft: 6 },
   fillRow: { flexDirection: "row", alignItems: "flex-end", marginBottom: 8, width: "50%" },
@@ -307,6 +309,11 @@ function AdventurePage({
     <Page size="A4" style={styles.page} wrap>
       <Text style={styles.masthead}>{campaign.campaignName}</Text>
       <Text style={styles.date}>{formatLongDate(date)}</Text>
+      {!digest && (
+        <Link src={BUY_ME_A_COFFEE_URL} style={styles.coffee}>
+          Enjoy this with your coffee? Consider buying the creator one, it helps cover the running costs.
+        </Link>
+      )}
       <MailBackNote verb="Mark your move below" />
 
       <Text style={styles.h2}>{node.title}</Text>
@@ -501,6 +508,11 @@ function CreationPage({ campaign, campaignDoc, date, digest }: { campaign: DndCa
     <Page size="A4" style={styles.page} wrap>
       <Text style={styles.masthead}>{campaign.campaignName}</Text>
       <Text style={styles.date}>{formatLongDate(date)}</Text>
+      {!digest && (
+        <Link src={BUY_ME_A_COFFEE_URL} style={styles.coffee}>
+          Enjoy this with your coffee? Consider buying the creator one, it helps cover the running costs.
+        </Link>
+      )}
       <Text style={styles.body}>
         A new hero stands at the threshold of {campaign.campaignName}. Fill in the sheet below to begin.
       </Text>
@@ -529,6 +541,11 @@ function TerminalPage({
     <Page size="A4" style={styles.page} wrap>
       <Text style={styles.masthead}>{campaign.campaignName}</Text>
       <Text style={styles.date}>{formatLongDate(date)}</Text>
+      {!digest && (
+        <Link src={BUY_ME_A_COFFEE_URL} style={styles.coffee}>
+          Enjoy this with your coffee? Consider buying the creator one, it helps cover the running costs.
+        </Link>
+      )}
       <Text style={styles.h2}>{won ? "Victory!" : "You Have Fallen"}</Text>
       <Text style={styles.body}>
         {won

@@ -2,6 +2,7 @@ import { formatIsoDate, type Asset, type RunContext, type ServicePlugin } from "
 import {
   Document,
   Line,
+  Link,
   Page,
   Polyline,
   Rect,
@@ -11,6 +12,7 @@ import {
   View,
   renderToBuffer,
 } from "@react-pdf/renderer";
+import { BUY_ME_A_COFFEE_URL } from "@/lib/site";
 
 const LOW_BATTERY_THRESHOLD = 20;
 const FORECAST_HOURS = 12;
@@ -431,6 +433,7 @@ const styles = StyleSheet.create({
   colAction: { flex: 1, textAlign: "right" },
   chartContainer: { marginVertical: 6 },
   footer: { position: "absolute", bottom: 20, left: 48, right: 48, fontSize: 8, color: "#888888", textAlign: "center" },
+  coffee: { fontSize: 9, color: "#888888", marginBottom: 14 },
 });
 
 // React-PDF Document Component. `digest` suppresses this document's own
@@ -484,6 +487,11 @@ export function HaDocument({ data, date, digest }: { data: HaSummaryData; date: 
         <Text style={styles.date}>
           {data.todayFormatted} {data.sunInfo ? `· ${data.sunInfo}` : ""}
         </Text>
+        {!digest && (
+          <Link src={BUY_ME_A_COFFEE_URL} style={styles.coffee}>
+            Enjoy this with your coffee? Consider buying the creator one, it helps cover the running costs.
+          </Link>
+        )}
 
         {/* Weather Now */}
         {data.weatherNow && (

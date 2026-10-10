@@ -11,7 +11,8 @@ import {
   type RunContext,
   type ServicePlugin,
 } from "@dailyscribe/core";
-import { Document, Font, G, Line, Page, Path, Rect, StyleSheet, Svg, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import { Document, Font, G, Line, Link, Page, Path, Rect, StyleSheet, Svg, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import { BUY_ME_A_COFFEE_URL } from "@/lib/site";
 import { NOTO_SANS_JP_400, NOTO_SANS_JP_700 } from "./fonts/noto-sans-jp";
 
 const PRACTICE_BOXES = 6;
@@ -41,6 +42,7 @@ const styles = StyleSheet.create({
   date: { fontSize: 11, color: "#444444", marginBottom: 14 },
   completedNote: { fontSize: 9.5, color: "#666666", marginBottom: 14 },
   mailBack: { fontSize: 9.5, color: "#555555", marginBottom: 14 },
+  coffee: { fontSize: 9, color: "#888888", marginBottom: 14 },
   mailBackAddr: { fontWeight: "bold", color: "#222222" },
   card: { marginBottom: 22, paddingBottom: 16, borderBottom: "0.5pt solid #dddddd" },
   cardHeader: { flexDirection: "row", marginBottom: 8 },
@@ -170,6 +172,11 @@ export function KanjiDocument({
           <Text style={styles.mailBackAddr}>my@dailyscribe.ca</Text>
           {" "}— Daily Scribe reads your handwriting, grades it, and tracks your progress.
         </Text>
+        {!digest && (
+          <Link src={BUY_ME_A_COFFEE_URL} style={styles.coffee}>
+            Enjoy this with your coffee? Consider buying the creator one, it helps cover the running costs.
+          </Link>
+        )}
         {batch.isRetry && (
           <Text style={styles.completedNote}>
             A few of these didn&apos;t come through clearly last time — here they are again for more practice.

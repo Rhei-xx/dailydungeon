@@ -10,6 +10,7 @@ import {
   renderToBuffer,
 } from "@react-pdf/renderer";
 
+import { BUY_ME_A_COFFEE_URL } from "@/lib/site";
 import { heroCoverArtBase64 } from "./digest-cover-art";
 
 // A4 in PDF points (pdfkit's own PAGE_SIZES constant) — needed here (not
@@ -37,6 +38,7 @@ const styles = StyleSheet.create({
   coverTitle: { fontSize: 30, fontWeight: "bold", marginTop: 24, textAlign: "center" },
   coverDate: { fontSize: 13, color: "#444444", marginTop: 8, textAlign: "center" },
   coverTagline: { fontSize: 10, color: "#888888", marginTop: 16, textAlign: "center" },
+  coverCoffee: { fontSize: 9, color: "#888888", marginTop: 10, textAlign: "center" },
 
   tocPage: { paddingVertical: MARGIN_TOP, paddingHorizontal: MARGIN_X, fontFamily: "Helvetica", color: "#111111" },
   tocHeading: { fontSize: 20, fontWeight: "bold" },
@@ -85,6 +87,9 @@ function DigestCoverDocument({ sections, dateFormatted }: { sections: DigestCove
         <Text style={styles.coverTitle}>Daily Scribe</Text>
         <Text style={styles.coverDate}>{dateFormatted}</Text>
         <Text style={styles.coverTagline}>Your daily services, bundled into one PDF.</Text>
+        <Link src={BUY_ME_A_COFFEE_URL} style={styles.coverCoffee}>
+          Enjoy this with your coffee? Consider buying the creator one, it helps cover the running costs.
+        </Link>
       </Page>
       <Page size="A4" style={styles.tocPage}>
         <View style={{ height: HEADING_BLOCK_HEIGHT, justifyContent: "flex-end" }}>

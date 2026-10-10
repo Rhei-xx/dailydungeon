@@ -6,6 +6,7 @@ export const SITE_NAME = "The Daily Scribe";
 export const OWNER_NAME = "Ronan O'Driscoll";
 export const CONTACT_EMAIL = "privacy@dailyscribe.ca";
 export const SIGN_IN_URL = "https://my.dailyscribe.ca";
+export const BUY_ME_A_COFFEE_URL = "https://buymeacoffee.com/ronanodrisb";
 
 // Used in the Terms "governing law" clause. Confirm/adjust to your actual
 // jurisdiction of residence.

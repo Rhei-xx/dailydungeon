@@ -10,6 +10,7 @@ import {
 } from "@react-pdf/renderer";
 import { XMLParser } from "fast-xml-parser";
 import { ALL_BBC_FEEDS, BBC_FEEDS, type BbcFeed } from "@/lib/bbc-feeds";
+import { BUY_ME_A_COFFEE_URL } from "@/lib/site";
 
 const FEEDS_BY_KEY = new Map(ALL_BBC_FEEDS.map((f) => [f.key, f]));
 const DEFAULT_MAX_PER_FEED = 9;
@@ -136,6 +137,7 @@ const styles = StyleSheet.create({
   itemLink: { color: "#111111", textDecoration: "underline" },
   itemSummary: { fontSize: 9.5, color: "#333333", lineHeight: 1.4, marginTop: 2 },
   footer: { position: "absolute", bottom: 24, left: 56, right: 56, fontSize: 8, color: "#888888", textAlign: "center" },
+  coffee: { fontSize: 9, color: "#888888", marginBottom: 14 },
 });
 
 function formatLongDate(date: Date): string {
@@ -158,6 +160,11 @@ function BbcDocument({ sections, date, digest }: { sections: NewsSection[]; date
       <Page size="A4" style={styles.page} wrap>
         <Text style={styles.masthead}>BBC News</Text>
         <Text style={styles.date}>{formatLongDate(date)}</Text>
+        {!digest && (
+          <Link src={BUY_ME_A_COFFEE_URL} style={styles.coffee}>
+            Enjoy this with your coffee? Consider buying the creator one, it helps cover the running costs.
+          </Link>
+        )}
         {sections.map((section) => (
           <View key={section.label} style={styles.section} wrap={false}>
             <Text style={styles.sectionTitle}>{section.label}</Text>

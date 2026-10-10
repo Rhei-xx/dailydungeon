@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ObjectId } from "mongodb";
 import { collections, decryptSecret, type KanjiSubmission } from "@dailyscribe/core";
 import { auth, signIn, signOut } from "@/auth";
+import { BUY_ME_A_COFFEE_URL } from "@/lib/site";
 import { DashboardForm } from "./dashboard-form";
 
 export const runtime = "nodejs";
@@ -237,6 +238,12 @@ export default async function DashboardPage() {
         }
       />
       </Suspense>
+
+      <footer className="dashboard-footer">
+        <a href={BUY_ME_A_COFFEE_URL} target="_blank" rel="noopener">
+          Buy Me a Coffee
+        </a>
+      </footer>
     </main>
   );
 }
