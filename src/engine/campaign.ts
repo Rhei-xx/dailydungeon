@@ -1,8 +1,8 @@
 import type { DndCampaignDefinition } from "./types";
 
-/** The built-in adventure, ported verbatim from the old repo's `dnd/campaign.json`.
- *  A fixed, shared dungeon — every user plays the same one, with independent
- *  per-user progress (the same shape as the Kanji curriculum + per-user cursor). */
+/** The built-in adventure, ported verbatim from the old repo's `dnd/campaign.json`,
+ *  plus structured `toHit`/`damage` on each monster so the engine can roll its
+ *  attacks. Fixed and shared; all per-player progress lives in the state file. */
 export const SUNKEN_VAULT_CAMPAIGN: DndCampaignDefinition = {
   campaignName: "The Sunken Vault (Solo Edition)",
   schemaVersion: 1,
@@ -32,6 +32,8 @@ export const SUNKEN_VAULT_CAMPAIGN: DndCampaignDefinition = {
           hp: 7,
           ac: 12,
           attack: "+4 to hit, 1d4+2 piercing",
+          toHit: 4,
+          damage: "1d4+2",
           dexMod: 2,
           passivePerception: 10,
         },
@@ -41,6 +43,8 @@ export const SUNKEN_VAULT_CAMPAIGN: DndCampaignDefinition = {
           hp: 7,
           ac: 12,
           attack: "+4 to hit, 1d4+2 piercing",
+          toHit: 4,
+          damage: "1d4+2",
           dexMod: 2,
           passivePerception: 10,
         },
@@ -69,6 +73,8 @@ export const SUNKEN_VAULT_CAMPAIGN: DndCampaignDefinition = {
           hp: 7,
           ac: 12,
           attack: "+4 to hit, 1d4+2 piercing",
+          toHit: 4,
+          damage: "1d4+2",
           dexMod: 2,
           passivePerception: 10,
         },
@@ -89,6 +95,8 @@ export const SUNKEN_VAULT_CAMPAIGN: DndCampaignDefinition = {
           hp: 7,
           ac: 15,
           attack: "+4 to hit, 1d6+2 slashing (scimitar)",
+          toHit: 4,
+          damage: "1d6+2",
           dexMod: 2,
           passivePerception: 9,
         },
@@ -108,6 +116,8 @@ export const SUNKEN_VAULT_CAMPAIGN: DndCampaignDefinition = {
           hp: 4,
           ac: 13,
           attack: "+3 to hit, 1d4+1 piercing",
+          toHit: 3,
+          damage: "1d4+1",
           dexMod: 1,
           passivePerception: 8,
         },
@@ -117,6 +127,8 @@ export const SUNKEN_VAULT_CAMPAIGN: DndCampaignDefinition = {
           hp: 4,
           ac: 13,
           attack: "+3 to hit, 1d4+1 piercing",
+          toHit: 3,
+          damage: "1d4+1",
           dexMod: 1,
           passivePerception: 8,
         },

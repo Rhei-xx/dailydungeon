@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { abilityMod, deriveCharacter, normalizeClass, proficiencyBonus } from "./rules";
+import {
+  abilityMod,
+  characterBonuses,
+  deriveCharacter,
+  normalizeClass,
+  proficiencyBonus,
+} from "./rules";
 
 describe("abilityMod", () => {
   it("matches standard 5e ability modifier table", () => {
@@ -50,13 +56,21 @@ describe("deriveCharacter", () => {
   });
 
   it("derives a barbarian with AC = 10 + DEX mod + CON mod", () => {
-    const ch = deriveCharacter({ name: "Krag", class: "barbarian", scores: { dexterity: 14, constitution: 16 } });
+    const ch = deriveCharacter({
+      name: "Krag",
+      class: "barbarian",
+      scores: { dexterity: 14, constitution: 16 },
+    });
     expect(ch.ac).toBe(15); // 10 + 2 + 3
     expect(ch.maxHp).toBe(15); // hit die 12 + CON mod (+3)
   });
 
   it("defaults every missing score to 10 and clamps out-of-range scores to 1-20", () => {
-    const ch = deriveCharacter({ name: "Test", class: "fighter", scores: { strength: 99, wisdom: -5 } });
+    const ch = deriveCharacter({
+      name: "Test",
+      class: "fighter",
+      scores: { strength: 99, wisdom: -5 },
+    });
     expect(ch.scores.strength).toBe(20);
     expect(ch.scores.wisdom).toBe(1);
     expect(ch.scores.dexterity).toBe(10);
@@ -66,5 +80,35 @@ describe("deriveCharacter", () => {
     const ch = deriveCharacter({ name: "  ", class: "wizard", scores: {} });
     expect(ch.class).toBe("Fighter");
     expect(ch.name).toBe("Hero");
+  });
+});
+
+describe("characterBonuses", () => {
+  it("adds proficiency to attacks, and to Stealth only for a rogue", () => {
+    const rogue = deriveCharacter({
+      name: "Vex",
+      class: "rogue",
+      scores: { dexterity: 16, wisdom: 12 },
+    });
+    expect(characterBonuses(rogue)).toEqual({
+      toHit: 5,
+      damage: 3,
+      stealth: 5,
+      perception: 1,
+      initiative: 3,
+    });
+
+    const fighter = deriveCharacter({
+      name: "Rowan",
+      class: "fighter",
+      scores: { strength: 16, dexterity: 12 },
+    });
+    expect(characterBonuses(fighter)).toEqual({
+      toHit: 5,
+      damage: 3,
+      stealth: 1,
+      perception: 0,
+      initiative: 1,
+    });
   });
 });
