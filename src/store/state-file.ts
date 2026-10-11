@@ -25,16 +25,18 @@ export interface GameFile {
 }
 
 export interface MailBookkeeping {
-  /** When the last turn email (or reminder) went out, ISO — replies received
-   *  after this are the ones the next run considers. */
-  lastTurnSentAt?: string;
-  lastTurnMessageId?: string;
+  /** Start of the run that sent the last email (turn, unclear, reminder or
+   *  welcome), ISO. Replies received after this are the ones the next run
+   *  reads — it's the run's *start*, so a reply landing mid-run isn't lost. */
+  lastSentAt?: string;
+  lastMessageId?: string;
   /** Local date (YYYY-MM-DD in TIMEZONE) of the last run that got past the
    *  due check — makes the daily run exactly-once per day. */
   lastRunLocalDate?: string;
   /** Message-IDs of replies already applied or superseded, newest last. */
   processedMessageIds: string[];
-  /** Turn number a "your adventure awaits" reminder was already sent for. */
+  /** Turn number a "your adventure awaits" reminder was already sent for;
+   *  cleared whenever a reply is read. */
   remindedForTurn?: number;
 }
 
@@ -66,7 +68,7 @@ export function freshGameFile(): GameFile {
 }
 
 /** Append reply Message-IDs to the processed list — deduped, capped to the
- *  newest MAX_PROCESSED_IDS (older replies predate lastTurnSentAt anyway). */
+ *  newest MAX_PROCESSED_IDS (older replies predate lastSentAt anyway). */
 export function withProcessed(mail: MailBookkeeping, ids: string[]): MailBookkeeping {
   const merged = [...mail.processedMessageIds.filter((id) => !ids.includes(id)), ...ids];
   return { ...mail, processedMessageIds: merged.slice(-MAX_PROCESSED_IDS) };

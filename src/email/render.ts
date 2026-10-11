@@ -82,7 +82,9 @@ export function subjectFor(view: EmailView): string {
     case "unclear":
       return `Daily Dungeon · Turn ${next} — I didn't catch that`;
     case "reminder":
-      return `Daily Dungeon · Your adventure awaits — ${room}`;
+      return view.play.gameState.status === "active"
+        ? `Daily Dungeon · Your adventure awaits — ${room}`
+        : "Daily Dungeon · Your adventure awaits — create your hero";
     case "victory":
       return `Daily Dungeon · Victory! ${ch.name} cleared ${shortCampaignName(view.campaign)}`;
     case "death":
