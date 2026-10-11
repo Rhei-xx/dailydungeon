@@ -33,15 +33,23 @@ export interface Mailbox {
 }
 
 /** A stable Message-ID from the facts that define one email: the campaign,
- *  the turn it answers, which reply (if any) it answers, and its kind. */
+ *  the turn, its kind, the reply it answers (if any), and the email sent
+ *  before it. Chaining on the previous email keeps every send unique (two
+ *  reminders for the same turn can't collide) while a retry of the same run,
+ *  which starts from the same saved game, reproduces the same id. */
 export function messageIdFor(parts: {
   campaignId: string;
   turn: number;
   kind: string;
   replyId?: string;
+  previousId?: string;
 }): string {
   const digest = createHash("sha256")
-    .update([parts.campaignId, parts.turn, parts.kind, parts.replyId ?? ""].join("|"))
+    .update(
+      [parts.campaignId, parts.turn, parts.kind, parts.replyId ?? "", parts.previousId ?? ""].join(
+        "|",
+      ),
+    )
     .digest("hex")
     .slice(0, 20);
   return `<dd.${parts.kind}.${parts.turn}.${digest}@dailydungeon.invalid>`;

@@ -202,6 +202,19 @@ describe("tick — quiet days", () => {
   });
 });
 
+describe("tick — Message-IDs", () => {
+  it("gives a second reminder for the same turn its own Message-ID", async () => {
+    const store = memoryStore(activeGame());
+    const mailbox = memoryMailbox();
+    const first = await tick(deps(store, mailbox, day(4))); // 3 quiet days after day 1
+    mailbox.receive("hmm", day(4, "14:00")); // unclear: the turn doesn't advance
+    expect((await tick(deps(store, mailbox, day(5)))).kind).toBe("unclear");
+    const second = await tick(deps(store, mailbox, day(8))); // 3 more quiet days
+    expect([first.kind, second.kind]).toEqual(["reminder", "reminder"]);
+    expect(second.email?.messageId).not.toBe(first.email?.messageId);
+  });
+});
+
 describe("tick — endings", () => {
   it("records a death, then starts a new campaign from the next character reply", async () => {
     const game = activeGame();

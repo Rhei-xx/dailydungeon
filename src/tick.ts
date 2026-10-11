@@ -114,17 +114,19 @@ async function applyReply(
   }
 
   if (parsed.intent === "restart") {
-    const history =
+    // Only an adventure in progress can be retired; the parser never yields
+    // "restart" otherwise, but don't record a run that didn't happen.
+    const retired =
       game.play.gameState.status === "active"
-        ? [...game.history, finishedRun(game, "restarted", deps.now)]
-        : game.history;
+        ? finishedRun(game, "restarted", deps.now)
+        : undefined;
     const next: GameFile = {
       ...game,
       campaignId: newCampaignId(),
       play: awaitingCharacterState(campaign),
-      history,
+      history: retired ? [...game.history, retired] : game.history,
     };
-    return { game: next, view: { kind: "welcome", play: next.play, finishedRun: history.at(-1) } };
+    return { game: next, view: { kind: "welcome", play: next.play, finishedRun: retired } };
   }
 
   if (parsed.intent === "character") {
@@ -257,6 +259,7 @@ export async function tick(deps: TickDeps, opts: TickOptions = {}): Promise<Tick
     turn: game.play.gameState.turnCount,
     kind,
     replyId,
+    previousId: game.mail.lastMessageId,
   });
   const email = { ...rendered, messageId };
 

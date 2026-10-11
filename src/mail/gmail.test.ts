@@ -46,6 +46,11 @@ describe("messageIdFor", () => {
     const base = { campaignId: "abc123", turn: 4, kind: "turn", replyId: "<r1@mail>" };
     expect(messageIdFor(base)).toBe(messageIdFor({ ...base }));
     expect(messageIdFor(base)).not.toBe(messageIdFor({ ...base, replyId: "<r2@mail>" }));
+    // Two reminders for the same turn differ because the email before each differs.
+    const reminder = { campaignId: "abc123", turn: 4, kind: "reminder" };
+    expect(messageIdFor({ ...reminder, previousId: "<a>" })).not.toBe(
+      messageIdFor({ ...reminder, previousId: "<b>" }),
+    );
     expect(messageIdFor(base)).toMatch(/^<dd\.turn\.4\.[0-9a-f]{20}@dailydungeon\.invalid>$/);
   });
 });
