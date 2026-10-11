@@ -1,0 +1,101 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renderEmail > renders a turn: what was read, the story, every roll, the room, map and hero 1`] = `
+"##- Reply above this line -##
+
+DAILY DUNGEON · Turn 2 · Sunday, October 11, 2026
+The Tower Entry
+
+Your move, as I read it: Climb down the rope.
+
+You lower yourself hand over hand into the dark. Something squeaks below.
+
+WHAT HAPPENED
+-------------
+- You go down to The Tower Entry.
+
+WHERE YOU ARE: THE TOWER ENTRY
+------------------------------
+The rope ends on the masonry floor of a round, roofless tower room. Rubble and old leaves cover the ground. Two giant rats startle from a nest in the debris.
+
+Enemies:
+- Giant Rat — HP 7/7 · AC 12 · attack +4, 1d4+2 · initiative 12 · spots sneaking on 10+
+- Giant Rat — HP 7/7 · AC 12 · attack +4, 1d4+2 · initiative 12 · spots sneaking on 10+
+Exits: north, east, west.
+
+Map ([@] = you):
+[ ]
+ |
+[@]
+
+YOUR HERO: BRAKKA THE BARBARIAN (LEVEL 1)
+-----------------------------------------
+HP 14/14 · AC 13 · to hit +5 · damage 1d12+3 (Greataxe) · stealth +1 · perception +0 · initiative +1
+Inventory: Greataxe, Handaxe x2, Explorer's pack, Health Potion x1
+
+YOUR MOVE
+---------
+Reply to this email with what you do, in your own words. For example:
+- Attack the giant rat. I rolled 15 to hit and 6 damage.
+- Sneak past and go north.
+- Dodge, and drink a potion.
+
+Rolling real dice? Put your totals in, modifiers added. Leave them out and I'll roll for you; monsters always roll their own.
+I play your latest reply at 07:00 (America/Toronto) each day, so you can change your mind until then. Reply "restart" to begin again with a new hero.
+
+Daily Dungeon: solo D&D by email, forked from Daily Scribe.
+"
+`;
+
+exports[`renderEmail > renders death and victory with a run summary and a way to play again 1`] = `
+"##- Reply above this line -##
+
+DAILY DUNGEON · Sunday, October 11, 2026
+Brakka has fallen
+
+WHAT HAPPENED
+-------------
+- You have fallen.
+
+Brakka the Barbarian fell in the dark after 6 turns. Rooms explored: 1 of 6. Monsters defeated: 0.
+
+YOUR HERO: BRAKKA THE BARBARIAN (LEVEL 1)
+-----------------------------------------
+HP 0/14 · AC 13 · to hit +5 · damage 1d12+3 (Greataxe) · stealth +1 · perception +0 · initiative +1
+Inventory: Greataxe, Handaxe x2, Explorer's pack, Health Potion x1
+
+CHOOSE A CLASS
+--------------
+- Fighter: d10 HP, chain mail + shield (AC 18), Longsword. Tough and reliable.
+- Rogue: d8 HP, leather armour (AC 11 + DEX), Shortsword + bow. Expert at sneaking.
+- Barbarian: d12 HP, unarmoured (AC 10 + DEX + CON), Greataxe. Big hits, big health.
+
+Reply with a name and a class, for example “Brakka, barbarian”. If you rolled your own ability scores (STR, DEX, CON, INT, WIS, CHA), include them; anything you leave out I'll roll for you (4d6, drop the lowest). Can't decide? Reply “surprise me”.
+I'll read your reply at 07:00 (America/Toronto) and your adventure begins.
+
+Daily Dungeon: solo D&D by email, forked from Daily Scribe.
+"
+`;
+
+exports[`renderEmail > renders the welcome email with the class choice and no hero yet 1`] = `
+"##- Reply above this line -##
+
+DAILY DUNGEON · Sunday, October 11, 2026
+Create your hero
+
+The Sunken Vault: A ledge overlooks a citadel sunk deep into the earth. A sturdy rope, knotted at intervals, is tied to a leaning pillar and drops into the dark below.
+
+This is a solo Dungeons & Dragons adventure played over email, one turn a day. Each morning I send what happened and where you stand; you reply with your next move whenever suits you.
+
+CHOOSE A CLASS
+--------------
+- Fighter: d10 HP, chain mail + shield (AC 18), Longsword. Tough and reliable.
+- Rogue: d8 HP, leather armour (AC 11 + DEX), Shortsword + bow. Expert at sneaking.
+- Barbarian: d12 HP, unarmoured (AC 10 + DEX + CON), Greataxe. Big hits, big health.
+
+Reply with a name and a class, for example “Brakka, barbarian”. If you rolled your own ability scores (STR, DEX, CON, INT, WIS, CHA), include them; anything you leave out I'll roll for you (4d6, drop the lowest). Can't decide? Reply “surprise me”.
+I'll read your reply at 07:00 (America/Toronto) and your adventure begins.
+
+Daily Dungeon: solo D&D by email, forked from Daily Scribe.
+"
+`;
