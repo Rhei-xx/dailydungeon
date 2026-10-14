@@ -1,0 +1,140 @@
+import type { DndCampaignDefinition } from "./types";
+
+/** The built-in adventure, ported verbatim from the old repo's `dnd/campaign.json`,
+ *  plus structured `toHit`/`damage` on each monster so the engine can roll its
+ *  attacks. Fixed and shared; all per-player progress lives in the state file. */
+export const SUNKEN_VAULT_CAMPAIGN: DndCampaignDefinition = {
+  campaignName: "The Sunken Vault (Solo Edition)",
+  schemaVersion: 1,
+  grid: { cols: 5, rows: 5 },
+  startNode: "ravine_ledge",
+  goalNode: "twisted_grove",
+  nodes: {
+    ravine_ledge: {
+      title: "The Ravine Ledge",
+      x: 2,
+      y: 0,
+      description:
+        "A ledge overlooks a citadel sunk deep into the earth. A sturdy rope, knotted at intervals, is tied to a leaning pillar and drops into the dark below.",
+      monsters: [],
+      exits: { down: "tower_entry" },
+    },
+    tower_entry: {
+      title: "The Tower Entry",
+      x: 2,
+      y: 1,
+      description:
+        "The rope ends on the masonry floor of a round, roofless tower room. Rubble and old leaves cover the ground. Two giant rats startle from a nest in the debris.",
+      monsters: [
+        {
+          id: "rat_a",
+          name: "Giant Rat",
+          hp: 7,
+          ac: 12,
+          attack: "+4 to hit, 1d4+2 piercing",
+          toHit: 4,
+          damage: "1d4+2",
+          dexMod: 2,
+          passivePerception: 10,
+        },
+        {
+          id: "rat_b",
+          name: "Giant Rat",
+          hp: 7,
+          ac: 12,
+          attack: "+4 to hit, 1d4+2 piercing",
+          toHit: 4,
+          damage: "1d4+2",
+          dexMod: 2,
+          passivePerception: 10,
+        },
+      ],
+      exits: { north: "dry_fountain", east: "rat_warren", west: "goblin_guardpost" },
+    },
+    dry_fountain: {
+      title: "The Dry Fountain",
+      x: 2,
+      y: 2,
+      description:
+        "A cracked stone fountain dominates this chamber, long dry. Faded carvings of a thorned tree ring its basin. A dark passage continues south.",
+      monsters: [],
+      exits: { down: "twisted_grove", back: "tower_entry" },
+    },
+    rat_warren: {
+      title: "The Rat Warren",
+      x: 3,
+      y: 1,
+      description:
+        "A low side-chamber packed with shredded nesting material. The stink is overwhelming. A lone giant rat guards a glint of metal in the muck.",
+      monsters: [
+        {
+          id: "rat_c",
+          name: "Giant Rat",
+          hp: 7,
+          ac: 12,
+          attack: "+4 to hit, 1d4+2 piercing",
+          toHit: 4,
+          damage: "1d4+2",
+          dexMod: 2,
+          passivePerception: 10,
+        },
+      ],
+      loot: ["Tarnished silver key"],
+      exits: { west: "tower_entry" },
+    },
+    goblin_guardpost: {
+      title: "The Goblin Guardpost",
+      x: 1,
+      y: 1,
+      description:
+        "Crude barricades of broken furniture block half the room. A goblin sentry crouches behind them, scimitar drawn, eyes wide in the gloom.",
+      monsters: [
+        {
+          id: "goblin_a",
+          name: "Goblin",
+          hp: 7,
+          ac: 15,
+          attack: "+4 to hit, 1d6+2 slashing (scimitar)",
+          toHit: 4,
+          damage: "1d6+2",
+          dexMod: 2,
+          passivePerception: 9,
+        },
+      ],
+      exits: { east: "tower_entry" },
+    },
+    twisted_grove: {
+      title: "The Twisted Grove",
+      x: 2,
+      y: 3,
+      description:
+        "The passage opens into an impossible underground grove lit by pale luminescent fungus. A gnarled white tree stands at its centre. Two twig blights skitter from its roots to bar your way.",
+      monsters: [
+        {
+          id: "blight_a",
+          name: "Twig Blight",
+          hp: 4,
+          ac: 13,
+          attack: "+3 to hit, 1d4+1 piercing",
+          toHit: 3,
+          damage: "1d4+1",
+          dexMod: 1,
+          passivePerception: 8,
+        },
+        {
+          id: "blight_b",
+          name: "Twig Blight",
+          hp: 4,
+          ac: 13,
+          attack: "+3 to hit, 1d4+1 piercing",
+          toHit: 3,
+          damage: "1d4+1",
+          dexMod: 1,
+          passivePerception: 8,
+        },
+      ],
+      isGoal: true,
+      exits: { up: "dry_fountain" },
+    },
+  },
+};

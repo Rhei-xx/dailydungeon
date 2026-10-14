@@ -1,0 +1,90 @@
+# Daily Dungeon's daily run.
+#
+# Runs hourly, but `pnpm tick` decides whether it's time: it acts once per
+# local day, on the first run at or after DELIVERY_TIME in TIMEZONE. So a
+# late GitHub schedule just runs late, and daylight saving needs no edits.
+#
+# The game lives encrypted on the `game-state` branch (created on the first
+# run). Each run checks that branch out into ./state, plays the turn, and
+# commits the file back if it changed — one commit per day you play, so
+# `git revert` on that branch undoes a turn.
+#
+# Notes: scheduled workflows only run from the default branch; a fork starts
+# with Actions disabled (enable it once in the Actions tab); and GitHub
+# pauses schedules on public repos after 60 days without activity.
+
+name: daily-turn
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Play now, even if it isn't delivery time yet or today's turn already ran"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-turn
+  cancel-in-progress: false
+
+jobs:
+  turn:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Check out the game-state branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch --depth=1 origin game-state:game-state; then
+            git worktree add state game-state
+          else
+            echo "No game-state branch yet: starting a new game."
+            git worktree add --orphan -b game-state state
+          fi
+
+      - name: Play the daily turn
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          PLAYER_EMAIL: ${{ secrets.PLAYER_EMAIL }}
+          STATE_ENCRYPTION_KEY: ${{ secrets.STATE_ENCRYPTION_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          TIMEZONE: ${{ vars.TIMEZONE }}
+          DELIVERY_TIME: ${{ vars.DELIVERY_TIME }}
+          REQUIRE_DMARC: ${{ vars.REQUIRE_DMARC }}
+          STATE_DIR: state
+        run: pnpm tick ${{ inputs.force && '--force' || '' }}
+
+      - name: Save the game
+        working-directory: state
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No change to the game."
+            exit 0
+          fi
+          git commit -q -m "Game state, $(date -u +%Y-%m-%dT%H:%MZ)"
+          for attempt in 1 2 3 4; do
+            if git push origin HEAD:game-state; then exit 0; fi
+            sleep $((2 ** attempt))
+          done
+          echo "Couldn't push the game state." >&2
+          exit 1

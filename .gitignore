@@ -14,3 +14,7 @@ downloads/
 # os
 .DS_Store
 .vercel
+
+# local game state + previews (CI checks the game-state branch out into state/)
+state/
+out/

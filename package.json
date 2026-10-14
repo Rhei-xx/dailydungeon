@@ -1,23 +1,35 @@
 {
-  "name": "dailyscribe",
+  "name": "dailydungeon",
   "version": "0.0.0",
   "private": true,
+  "description": "Solo D&D, one turn a day, played over email.",
   "license": "AGPL-3.0-only",
+  "type": "module",
   "packageManager": "pnpm@9.15.9",
   "engines": {
-    "node": ">=20"
+    "node": ">=20.12"
   },
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "test": "turbo run test",
-    "typecheck": "turbo run typecheck",
+    "tick": "tsx src/cli.ts tick",
+    "preview": "tsx src/cli.ts preview",
+    "state": "tsx src/cli.ts state",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
+  "dependencies": {
+    "@google/genai": "2.24.0",
+    "imapflow": "2.0.7",
+    "mailparser": "3.9.28",
+    "nodemailer": "10.0.10"
+  },
   "devDependencies": {
-    "prettier": "^3.4.2",
-    "turbo": "^2.3.3",
-    "typescript": "^5.7.3"
+    "@types/mailparser": "3.4.6",
+    "@types/node": "22.20.4",
+    "prettier": "3.9.9",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "^2.1.9"
   }
 }
