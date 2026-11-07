@@ -30,6 +30,11 @@ export const COLORS = {
   accent: "#b0402e",
   panel: "#f7f1e6",
   good: "#3f6b3a",
+  /** Map rooms and passages: mid-tones that stay visible whether the mail
+   *  client shows the email light or recolours it for dark mode (a cream box
+   *  with a dark border vanished entirely in dark mode). */
+  mapRoom: "#9c917d",
+  mapPassage: "#8a7f6c",
 } as const;
 
 export const SERIF = "Georgia, 'Times New Roman', serif";

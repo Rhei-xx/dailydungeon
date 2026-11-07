@@ -22,6 +22,31 @@ import { DAY_MS, isDue, localParts } from "./time";
 /** One quiet stretch this long earns a single "your adventure awaits" email. */
 export const REMINDER_AFTER_DAYS = 3;
 
+/** How long after delivery time a reply may wait for Gemini to come back
+ *  before it's played with the keyword reader instead. GitHub's "hourly"
+ *  schedule really fires every few hours, so this allows a couple of tries. */
+export const AI_WAIT_HOURS = 12;
+
+function minutesOf(hhmm: string): number {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+}
+
+/** Whether a reply Gemini couldn't read should wait for a later run. Never
+ *  on a forced run (the player is waiting), never past the wait window, and
+ *  never in the day's last hour — after midnight the run isn't due again
+ *  until the next delivery time, which would cost a whole day. */
+export function canWaitForAi(
+  now: Date,
+  timeZone: string,
+  deliveryTime: string,
+  force: boolean | undefined,
+): boolean {
+  if (force) return false;
+  const local = minutesOf(localParts(now, timeZone).hhmm);
+  return local - minutesOf(deliveryTime) < AI_WAIT_HOURS * 60 && local < 23 * 60;
+}
+
 export interface TickDeps {
   store: StateStore;
   mailbox: Mailbox;
@@ -42,7 +67,8 @@ export interface TickOptions {
 }
 
 export interface TickResult {
-  status: "not_due" | "sent" | "quiet";
+  /** "deferred": a reply came in but Gemini was down, so it was left for a later run. */
+  status: "not_due" | "sent" | "quiet" | "deferred";
   kind?: EmailKind;
   subject?: string;
   /** The email that was (or, on a dry run, would have been) sent. */
@@ -105,11 +131,20 @@ async function applyReply(
   // Same campaign + turn + reply → same dice, so a retried run replays exactly.
   const dice = seededDice(`${game.campaignId}|${game.play.gameState.turnCount}|${reply.messageId}`);
   const readAs = parsed.summary || undefined;
+  // Shown under "Your move, as I read it" so the player can check what was used.
+  const backupReader = parsed.fallbackReason !== undefined && parsed.fallbackReason !== "no_key";
+  const yourRolls = parsed.intent === "move" ? (parsed.move?.rolls ?? {}) : undefined;
 
   if (parsed.intent === "unclear") {
     return {
       game,
-      view: { kind: "unclear", play: game.play, readAs, clarification: parsed.clarification },
+      view: {
+        kind: "unclear",
+        play: game.play,
+        readAs,
+        clarification: parsed.clarification,
+        backupReader,
+      },
     };
   }
 
@@ -148,6 +183,7 @@ async function applyReply(
         kind: "hero",
         play: result.state,
         readAs,
+        backupReader,
         narration: storyText(story),
         events: result.events,
         rolls: result.rolls,
@@ -175,6 +211,8 @@ async function applyReply(
       kind: status === "won" ? "victory" : status === "dead" ? "death" : "turn",
       play: result.state,
       readAs,
+      backupReader,
+      yourRolls,
       narration: storyText(story),
       events: result.events,
       rolls: result.rolls,
@@ -224,8 +262,17 @@ export async function tick(deps: TickDeps, opts: TickOptions = {}): Promise<Tick
       const parsed = await parseReply(deps.model, text, buildParseContext(game.play, campaign));
       parsedBy = parsed.source;
       replyId = latest.messageId;
+      if (
+        parsed.fallbackReason === "ai_unavailable" &&
+        canWaitForAi(deps.now, deps.timeZone, deps.deliveryTime, opts.force)
+      ) {
+        // Don't play a move on a keyword guess while Gemini is just busy:
+        // nothing is saved, so the next scheduled run reads it again.
+        log("Gemini is unavailable right now; leaving the reply for the next scheduled run.");
+        return { status: "deferred", repliesRead: fresh.length, parsedBy, saved: false };
+      }
       log(
-        `Parsed (${parsed.source}) as ${parsed.intent}: ${parsed.summary || parsed.clarification || ""}`,
+        `Parsed (${parsed.source}${parsed.fallbackReason ? `, ${parsed.fallbackReason}` : ""}) as ${parsed.intent}: ${parsed.summary || parsed.clarification || ""}`,
       );
       outcome = await applyReply(game, latest, parsed, deps, campaign);
     } else {

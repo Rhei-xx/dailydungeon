@@ -4,7 +4,8 @@ import { scriptedDice } from "./engine/dice";
 import { applyCharacterSheet, applyTurn } from "./engine/engine";
 import { memoryMailbox, type MemoryMailbox } from "./mail/memory-mailbox";
 import { freshGameFile, type GameFile, type StateStore } from "./store/state-file";
-import { tick, type TickDeps } from "./tick";
+import { AiUnavailableError, type TextModel } from "./ai/gemini";
+import { canWaitForAi, tick, type TickDeps } from "./tick";
 
 // October 2026: Toronto is on EDT (UTC-4), so 07:00 local is 11:00Z.
 const TZ = "America/Toronto";
@@ -246,6 +247,49 @@ describe("tick — endings", () => {
     expect(result.email?.text).toContain("Brakka the Barbarian retired after 1 turn.");
     expect(store.game?.play.gameState.status).toBe("awaiting_character");
     expect(store.game?.history.at(-1)?.outcome).toBe("restarted");
+  });
+});
+
+/** A Gemini that's down for the day, the way the live game saw it. */
+const busyGemini: TextModel = {
+  json: async () => Promise.reject(new AiUnavailableError("503 high demand", true)),
+  text: async () => Promise.reject(new AiUnavailableError("503 high demand", true)),
+};
+
+describe("tick — when Gemini is down", () => {
+  it("leaves the reply for a later run instead of guessing, saving and sending nothing", async () => {
+    const store = memoryStore(activeGame());
+    const mailbox = memoryMailbox();
+    mailbox.receive("attack the rat, rolled 15 and 6", day(1, "14:00"));
+
+    const result = await tick({ ...deps(store, mailbox, day(2)), model: busyGemini });
+    expect(result).toMatchObject({ status: "deferred", repliesRead: 1, saved: false });
+    expect(mailbox.sent).toHaveLength(0);
+    expect(mailbox.seen.size).toBe(0);
+    expect(store.saves).toBe(0);
+  });
+
+  it("plays with the backup reader on a forced run, and says so in the email", async () => {
+    const store = memoryStore(activeGame());
+    const mailbox = memoryMailbox();
+    mailbox.receive("attack the rat, rolled 15 and 6", day(1, "14:00"));
+
+    const result = await tick(
+      { ...deps(store, mailbox, day(2)), model: busyGemini },
+      { force: true },
+    );
+    expect(result).toMatchObject({ status: "sent", kind: "turn", parsedBy: "heuristic" });
+    expect(result.email?.text).toContain("Your dice: 15 to hit, 6 damage.");
+    expect(result.email?.text).toContain("backup reader read your reply");
+  });
+
+  it("stops waiting once the window has passed", () => {
+    // Delivery 07:00 Toronto. 08:20 local is inside the 12-hour window; 19:20 isn't.
+    expect(canWaitForAi(day(2, "12:20"), TZ, "07:00", false)).toBe(true);
+    expect(canWaitForAi(day(2, "23:20"), TZ, "07:00", false)).toBe(false);
+    expect(canWaitForAi(day(2, "12:20"), TZ, "07:00", true)).toBe(false);
+    // Never in the day's last hour: after midnight the run isn't due again until 07:00.
+    expect(canWaitForAi(day(3, "03:30"), TZ, "20:00", false)).toBe(false);
   });
 });
 

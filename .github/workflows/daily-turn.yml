@@ -35,7 +35,7 @@ concurrency:
 jobs:
   turn:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -67,6 +67,7 @@ jobs:
           STATE_ENCRYPTION_KEY: ${{ secrets.STATE_ENCRYPTION_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          GEMINI_FALLBACK_MODEL: ${{ vars.GEMINI_FALLBACK_MODEL }}
           TIMEZONE: ${{ vars.TIMEZONE }}
           DELIVERY_TIME: ${{ vars.DELIVERY_TIME }}
           REQUIRE_DMARC: ${{ vars.REQUIRE_DMARC }}

@@ -23,6 +23,8 @@ export interface ScheduleConfig {
 export interface AiConfig {
   geminiApiKey?: string;
   geminiModel?: string;
+  /** Tried when geminiModel keeps failing; "none" turns it off. */
+  geminiFallbackModel?: string;
 }
 
 export interface MailConfig {
@@ -91,7 +93,11 @@ export function readSchedule(env: Env, errors = new ConfigErrors()): ScheduleCon
 }
 
 export function readAi(env: Env): AiConfig {
-  return { geminiApiKey: value(env, "GEMINI_API_KEY"), geminiModel: value(env, "GEMINI_MODEL") };
+  return {
+    geminiApiKey: value(env, "GEMINI_API_KEY"),
+    geminiModel: value(env, "GEMINI_MODEL"),
+    geminiFallbackModel: value(env, "GEMINI_FALLBACK_MODEL"),
+  };
 }
 
 /** Just what the `state` commands need. */

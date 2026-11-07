@@ -210,7 +210,7 @@ export function applyTurn(
     gs.combat.node === gs.currentNode ? gs.combat : { node: gs.currentNode, playerFirst: null };
   gs.combat = combat;
   if (target && combat.playerFirst === null && (action === "attack" || given.initiative != null)) {
-    const init = playerD20("Initiative", given.initiative, bonus.initiative);
+    const init = playerD20("Your initiative", given.initiative, bonus.initiative);
     const monInit = Math.max(...livingAtStart.map(monsterInitiative));
     combat.playerFirst = init.total >= monInit;
     rolls[rolls.length - 1].outcome =
@@ -226,7 +226,7 @@ export function applyTurn(
 
   if (action === "sneak") {
     const dc = Math.max(...livingAtStart.map(monsterPassivePerception));
-    const stealth = playerD20("Stealth", given.stealth, bonus.stealth);
+    const stealth = playerD20("Your stealth", given.stealth, bonus.stealth);
     if (stealth.total >= dc) {
       sneakSuccess = true;
       rolls[rolls.length - 1].outcome = `vs passive Perception ${dc} — unseen`;
@@ -244,7 +244,7 @@ export function applyTurn(
     attackers = livingAtStart;
     attackMode = "disadvantage";
   } else if (action === "attack" && target) {
-    const toHit = playerD20(`To hit (${target.name})`, given.toHit, bonus.toHit);
+    const toHit = playerD20(`Your attack on the ${target.name}`, given.toHit, bonus.toHit);
     const crit = toHit.natural === 20;
     const hit = crit || (toHit.natural !== 1 && toHit.total >= target.ac);
     rolls[rolls.length - 1].outcome =
@@ -253,7 +253,7 @@ export function applyTurn(
       events.push(`Missed ${target.name} (rolled ${toHit.total} vs AC ${target.ac}).`);
     } else {
       const dealt = playerAmount(
-        "Damage",
+        `Your damage to the ${target.name}`,
         given.damage,
         `${ch.damageDie}${formatModifier(bonus.damage)}`,
         crit,
@@ -284,7 +284,7 @@ export function applyTurn(
     const crit = r.natural === 20;
     const hit = crit || (r.natural !== 1 && r.total >= ch.ac);
     rolls.push({
-      label: `${m.name} attacks`,
+      label: `${m.name}'s attack on you`,
       by: "dice",
       expr: r.expr,
       dice: r.dice,
@@ -298,7 +298,7 @@ export function applyTurn(
     const dmg = rollDice(dice, m.damage, { critical: crit });
     const taken = Math.max(0, dmg.total);
     rolls.push({
-      label: `${m.name} damage`,
+      label: `${m.name}'s damage to you`,
       by: "dice",
       expr: dmg.expr,
       dice: dmg.dice,
@@ -318,7 +318,7 @@ export function applyTurn(
     } else if (ch.currentHp >= ch.maxHp) {
       events.push("You're already at full health, so you keep the potion for later.");
     } else {
-      const heal = playerAmount("Potion healing", given.heal, POTION_HEAL);
+      const heal = playerAmount("Your potion healing", given.heal, POTION_HEAL);
       const before = ch.currentHp;
       ch.currentHp = Math.min(ch.maxHp, before + heal);
       ch.inventory = consumePotion(ch.inventory, idx);
@@ -334,7 +334,7 @@ export function applyTurn(
     if (gs.searchedNodes.includes(gs.currentNode)) {
       events.push("You search again, but find nothing new.");
     } else {
-      const perception = playerD20("Perception (search)", given.perception, bonus.perception);
+      const perception = playerD20("Your perception (search)", given.perception, bonus.perception);
       const found = perception.total >= SEARCH_DC;
       rolls[rolls.length - 1].outcome = `vs DC ${SEARCH_DC} — ${found ? "success" : "fail"}`;
       gs.searchedNodes.push(gs.currentNode);

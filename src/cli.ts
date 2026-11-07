@@ -59,7 +59,11 @@ async function runTick(args: string[]): Promise<void> {
         fromName: "Daily Dungeon",
       }),
       model: config.geminiApiKey
-        ? createGemini({ apiKey: config.geminiApiKey, model: config.geminiModel })
+        ? createGemini({
+            apiKey: config.geminiApiKey,
+            model: config.geminiModel,
+            fallbackModel: config.geminiFallbackModel,
+          })
         : null,
       now,
       timeZone: config.timeZone,
@@ -77,7 +81,11 @@ async function runTick(args: string[]): Promise<void> {
 
 function describe(result: TickResult): string {
   const what =
-    result.status === "sent" ? `sent ${result.kind} email "${result.subject}"` : result.status;
+    result.status === "sent"
+      ? `sent ${result.kind} email "${result.subject}"`
+      : result.status === "deferred"
+        ? "deferred (Gemini unavailable; the reply will be read again on the next run)"
+        : result.status;
   return `Result: ${what}${result.saved ? "; state saved" : ""}.`;
 }
 
@@ -101,7 +109,11 @@ async function runPreview(args: string[]): Promise<void> {
   const ai = readAi(process.env);
   const model =
     !values.offline && ai.geminiApiKey
-      ? createGemini({ apiKey: ai.geminiApiKey, model: ai.geminiModel })
+      ? createGemini({
+          apiKey: ai.geminiApiKey,
+          model: ai.geminiModel,
+          fallbackModel: ai.geminiFallbackModel,
+        })
       : null;
   let schedule = { timeZone: "UTC", deliveryTime: "07:00" };
   try {

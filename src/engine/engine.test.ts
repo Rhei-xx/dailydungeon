@@ -165,7 +165,7 @@ describe("applyTurn — attacking", () => {
     expect(state.gameState.monsterHp.goblin).toBe(2);
     expect(events.some((e) => e.includes("Hit Goblin for 5"))).toBe(true);
     expect(events).toContain("Goblin attacks and misses.");
-    expect(rolls.find((r) => r.label === "To hit (Goblin)")).toMatchObject({
+    expect(rolls.find((r) => r.label === "Your attack on the Goblin")).toMatchObject({
       by: "you",
       total: 18,
     });
@@ -195,13 +195,13 @@ describe("applyTurn — attacking", () => {
       dice,
     );
     expect(state.gameState.monsterHp.goblin).toBe(1);
-    expect(rolls.find((r) => r.label === "To hit (Goblin)")).toMatchObject({
+    expect(rolls.find((r) => r.label === "Your attack on the Goblin")).toMatchObject({
       by: "dice",
       expr: "1d20+2",
       total: 15,
       outcome: "vs AC 15 — hit",
     });
-    expect(rolls.find((r) => r.label === "Damage")).toMatchObject({
+    expect(rolls.find((r) => r.label === "Your damage to the Goblin")).toMatchObject({
       by: "dice",
       expr: "1d8",
       total: 6,
@@ -370,7 +370,7 @@ describe("applyTurn — sneak / flee / dodge", () => {
     );
     expect(events.some((e) => e.includes("Dodge action"))).toBe(true);
     expect(rolls[0]).toMatchObject({
-      label: "Goblin attacks",
+      label: "Goblin's attack on you",
       expr: "1d20+4 (disadvantage)",
       total: 8,
     });
@@ -463,7 +463,7 @@ describe("applyTurn — potions and search", () => {
     expect(state.gameState.searchedNodes).toContain("start");
     expect(events.some((e) => e.includes("don't find anything"))).toBe(true);
     expect(rolls[0]).toMatchObject({
-      label: "Perception (search)",
+      label: "Your perception (search)",
       by: "dice",
       outcome: "vs DC 12 — fail",
     });

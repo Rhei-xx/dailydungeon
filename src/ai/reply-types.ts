@@ -24,6 +24,9 @@ export interface ParsedReply {
   clarification?: string;
   /** Which parser produced this — the Gemini read or the keyword fallback. */
   source: "gemini" | "heuristic";
+  /** Why the keyword fallback was used: no key configured, Gemini down for
+   *  now (overload/timeout — worth trying again later), or another error. */
+  fallbackReason?: "no_key" | "ai_unavailable" | "ai_error";
 }
 
 /** What the parser needs to know about the game to read a reply sensibly. */

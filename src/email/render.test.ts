@@ -87,9 +87,25 @@ describe("renderEmail", () => {
     const email = renderEmail(
       view({ play: fight.state, events: fight.events, rolls: fight.rolls }),
     );
-    expect(email.text).toContain("- To hit (Giant Rat): your roll = 17 (vs AC 12 — hit)");
-    expect(email.text).toContain("- Damage: 1d12+3 [9] = 12");
+    expect(email.text).toContain(
+      "- Your attack on the Giant Rat: your own roll = 17 (vs AC 12 — hit)",
+    );
+    expect(email.text).toContain("- Your damage to the Giant Rat: 1d12+3 [9] = 12");
+    expect(email.text).toContain("- Giant Rat's attack on you: 1d20+4 [3] = 7");
     expect(email.html).toContain("1d20+4 [3]");
+  });
+
+  it("shows the dice you gave, and teaches rolling your own with your real bonuses", () => {
+    const { state } = inTowerEntry();
+    const email = renderEmail(
+      view({ play: state, readAs: "Attack the giant rat.", yourRolls: { toHit: 15 } }),
+    );
+    expect(email.text).toContain("Your dice: 15 to hit. Anything else was rolled for you.");
+    // Examples are moves only; the numbers live in a clearly-labelled dice guide.
+    expect(email.text).toContain("- Attack the giant rat.\n");
+    expect(email.text).toContain("“Attack the giant rat. 15 to hit, 6 damage.”");
+    expect(email.text).toContain("Your rolls: to hit d20+5 · damage 1d12+3 · stealth d20+1");
+    expect(email.text).not.toContain("backup reader");
   });
 
   it("renders an unclear reply without pretending anything happened", () => {
