@@ -65,6 +65,40 @@ describe("callWithFallback", () => {
   });
 });
 
+describe("callWithFallback logging", () => {
+  it("says which model answered, on which call, and how long it took", async () => {
+    const lines: string[] = [];
+    let t = 0;
+    const clock = () => (t += 50);
+    const call = vi.fn(async (model: string) => {
+      if (model === "flash") throw overloaded;
+      return "ok";
+    });
+    await callWithFallback(["flash", "lite"], call, {
+      sleep: async () => {},
+      log: (m) => lines.push(m),
+      label: "read reply",
+      now: clock,
+    });
+    expect(lines).toEqual([
+      expect.stringMatching(/^gemini \(read reply\): flash attempt 1 failed after \d+ ms: .*503/),
+      expect.stringMatching(/^gemini \(read reply\): flash attempt 2 failed after \d+ ms: .*503/),
+      "gemini (read reply): answered by lite (call 3, 50 ms)",
+    ]);
+  });
+
+  it("logs a summary line when nothing answers", async () => {
+    const lines: string[] = [];
+    await expect(
+      callWithFallback(["flash", "lite"], async () => Promise.reject(overloaded), {
+        sleep: async () => {},
+        log: (m) => lines.push(m),
+      }),
+    ).rejects.toBeInstanceOf(AiUnavailableError);
+    expect(lines.at(-1)).toBe("gemini: no answer after 4 calls (flash, lite)");
+  });
+});
+
 describe("geminiModels", () => {
   it("uses Flash then Flash-Lite by default, and honours overrides", () => {
     expect(geminiModels({})).toEqual(["gemini-flash-latest", "gemini-flash-lite-latest"]);
