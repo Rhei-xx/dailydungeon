@@ -11,6 +11,7 @@ import type {
   DndCampaignNode,
   DndCharacter,
   DndPlayState,
+  DndPlayerRolls,
   DndRollRecord,
 } from "../engine/types";
 import { REPLY_MARKER } from "../mail/reply-text";
@@ -33,6 +34,11 @@ export interface EmailView {
   deliveryTime: string;
   /** The player's move as the parser understood it. */
   readAs?: string;
+  /** Totals the player typed in and that were used — shown next to readAs.
+   *  Present (possibly empty) only for an ordinary move. */
+  yourRolls?: DndPlayerRolls;
+  /** The keyword reader stood in because Gemini couldn't be reached. */
+  backupReader?: boolean;
   narration?: string;
   /** The engine's own account of the turn, in order. */
   events?: string[];
@@ -131,13 +137,49 @@ function textHeading(title: string): string {
   return `${title.toUpperCase()}\n${"-".repeat(title.length)}`;
 }
 
-function readAsPart(readAs: string): Part {
+const ROLL_NAMES: [keyof DndPlayerRolls, string][] = [
+  ["initiative", "initiative"],
+  ["toHit", "to hit"],
+  ["damage", "damage"],
+  ["stealth", "stealth"],
+  ["perception", "perception"],
+  ["heal", "healing"],
+];
+
+/** "15 to hit, 6 damage" — the player's own totals, as used this turn. */
+export function describeYourRolls(rolls: DndPlayerRolls): string {
+  const given = ROLL_NAMES.filter(([key]) => rolls[key] != null).map(
+    ([key, name]) => `${rolls[key]} ${name}`,
+  );
+  return given.length > 0
+    ? `${given.join(", ")}. Anything else was rolled for you.`
+    : "none given, so every roll was made for you.";
+}
+
+const BACKUP_NOTE =
+  "Gemini couldn't be reached, so a simpler backup reader read your reply. If it got your move wrong, that's why.";
+
+function readAsPart(view: EmailView): Part {
+  const lines: string[] = [];
+  const htmlLines: string[] = [];
+  if (view.readAs) {
+    lines.push(`Your move, as I read it: ${view.readAs}`);
+    htmlLines.push(
+      `<div style="${LABEL}">Your move, as I read it</div><p style="${BODY}margin:4px 0 6px;font-style:italic;">${esc(view.readAs)}</p>`,
+    );
+  }
+  if (view.yourRolls) {
+    const used = `Your dice: ${describeYourRolls(view.yourRolls)}`;
+    lines.push(used);
+    htmlLines.push(`<p style="${SMALL}">${esc(used)}</p>`);
+  }
+  if (view.backupReader) {
+    lines.push(BACKUP_NOTE);
+    htmlLines.push(`<p style="${SMALL}font-style:italic;">${esc(BACKUP_NOTE)}</p>`);
+  }
   return {
-    html: row(
-      `<div style="${LABEL}">Your move, as I read it</div><p style="${BODY}margin-top:4px;font-style:italic;">${esc(readAs)}</p>`,
-      `background:${COLORS.panel};`,
-    ),
-    text: `Your move, as I read it: ${readAs}`,
+    html: row(htmlLines.join(""), `background:${COLORS.panel};`),
+    text: lines.join("\n"),
   };
 }
 
@@ -149,7 +191,7 @@ function narrationPart(narration: string): Part {
 }
 
 function rollCell(r: DndRollRecord): string {
-  if (r.by === "you") return "your roll";
+  if (r.by === "you") return "your own roll";
   return `${r.expr ?? ""}${r.dice && r.dice.length > 0 ? ` [${r.dice.join(", ")}]` : ""}`;
 }
 
@@ -235,7 +277,7 @@ function roomPart(view: EmailView): Part {
     `<p style="${SMALL}"><b style="color:${COLORS.ink};">Exits:</b> ${esc(exits.length > 0 ? exits.join(" · ") : "none")}${esc(searched)}</p>` +
     `<div style="${LABEL}margin:12px 0 6px;">Map</div>` +
     renderMapHtml(campaign, gs) +
-    `<p style="${SMALL}margin-top:6px;"><span style="color:${COLORS.accent};">■</span> you are here · □ explored</p>`;
+    `<p style="${SMALL}margin-top:6px;"><span style="color:${COLORS.accent};">■</span> you are here · <span style="color:${COLORS.mapRoom};">■</span> explored</p>`;
 
   const text = [
     textHeading(`Where you are: ${node.title}`),
@@ -294,14 +336,14 @@ function moveExamples(view: EmailView): string[] {
   const living = livingMonsters(node, play.gameState.monsterHp);
   const exits = exitDirections(node);
   const hasPotion = play.character.inventory.some((i) => i.toLowerCase().includes("potion"));
+  const unsearched = !play.gameState.searchedNodes.includes(play.gameState.currentNode);
   const examples: string[] = [];
   if (living.length > 0) {
-    examples.push(`Attack the ${living[0].name.toLowerCase()}. I rolled 15 to hit and 6 damage.`);
+    examples.push(`Attack the ${living[0].name.toLowerCase()}.`);
     if (exits.length > 0) examples.push(`Sneak past and go ${exits[0]}.`);
     examples.push(hasPotion ? "Dodge, and drink a potion." : "Dodge.");
   } else {
-    if (!play.gameState.searchedNodes.includes(play.gameState.currentNode))
-      examples.push("Search the room.");
+    if (unsearched) examples.push("Search the room.");
     if (exits.length > 0) examples.push(`Go ${exits[exits.length - 1]}.`);
     if (hasPotion && play.character.currentHp < play.character.maxHp)
       examples.push("Drink a potion.");
@@ -309,11 +351,37 @@ function moveExamples(view: EmailView): string[] {
   return examples;
 }
 
+/** How to add your own dice, with this hero's actual bonuses, and an example
+ *  that's plainly the player's own words (the old one read like a result). */
+function diceGuide(view: EmailView): { intro: string; example: string; formulas: string } {
+  const ch = view.play.character;
+  const b = characterBonuses(ch);
+  const node = view.campaign.nodes[view.play.gameState.currentNode];
+  const target = livingMonsters(node, view.play.gameState.monsterHp)[0];
+  const example = target
+    ? `Attack the ${target.name.toLowerCase()}. 15 to hit, 6 damage.`
+    : "Search the room. 14 perception.";
+  const formulas = [
+    `to hit d20${formatModifier(b.toHit)}`,
+    `damage ${ch.damageDie}${b.damage ? formatModifier(b.damage) : ""}`,
+    `stealth d20${formatModifier(b.stealth)}`,
+    `perception d20${formatModifier(b.perception)}`,
+    `initiative d20${formatModifier(b.initiative)}`,
+    "potion 2d4+2",
+  ].join(" · ");
+  return {
+    intro:
+      "Rolling your own dice? Roll, add your bonus, and put each total next to what it's for. You could write:",
+    example,
+    formulas: `Your rolls: ${formulas}. Leave any out and I'll roll it for you. Monsters always roll their own attacks, and the next email lists every roll and whose it was.`,
+  };
+}
+
 function howToReplyMove(view: EmailView): Part {
   const examples = moveExamples(view);
   const timing = `I play your latest reply at ${view.deliveryTime} (${view.timeZone}) each day, so you can change your mind until then.`;
-  const dice =
-    "Rolling real dice? Put your totals in, modifiers added. Leave them out and I'll roll for you; monsters always roll their own.";
+  const guide = diceGuide(view);
+  const dice = `${guide.intro} “${guide.example}” ${guide.formulas}`;
   const html =
     `<div style="${LABEL}margin-bottom:6px;">Your move</div>` +
     `<p style="${BODY}">Reply to this email with what you do, in your own words. For example:</p>` +
@@ -419,14 +487,14 @@ function partsFor(view: EmailView): Part[] {
       parts.push(introPart(view), howToReplyCharacter(view));
       return parts;
     case "unclear":
-      if (view.readAs) parts.push(readAsPart(view.readAs));
+      if (view.readAs || view.backupReader) parts.push(readAsPart(view));
       parts.push(clarificationPart(view));
       break;
     case "reminder":
       parts.push(reminderPart());
       break;
     default:
-      if (view.readAs) parts.push(readAsPart(view.readAs));
+      if (view.readAs || view.yourRolls || view.backupReader) parts.push(readAsPart(view));
       if (view.narration) parts.push(narrationPart(view.narration));
       if (rolls.length > 0 || events.length > 0) parts.push(dicePart(rolls, events));
       if (view.finishedRun) parts.push(runSummaryPart(view.finishedRun, view));

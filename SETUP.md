@@ -55,12 +55,13 @@ In the repo: **Settings → Secrets and variables → Actions**.
 
 **Variables:**
 
-| Name            | Example               | Default               |
-| --------------- | --------------------- | --------------------- |
-| `TIMEZONE`      | `America/Toronto`     | `UTC`                 |
-| `DELIVERY_TIME` | `07:00`               | `07:00`               |
-| `GEMINI_MODEL`  | `gemini-flash-latest` | `gemini-flash-latest` |
-| `REQUIRE_DMARC` | `false`               | `true`                |
+| Name                    | Example                    | Default                                          |
+| ----------------------- | -------------------------- | ------------------------------------------------ |
+| `TIMEZONE`              | `America/Toronto`          | `UTC`                                            |
+| `DELIVERY_TIME`         | `07:00`                    | `07:00`                                          |
+| `GEMINI_MODEL`          | `gemini-flash-latest`      | `gemini-flash-latest`                            |
+| `GEMINI_FALLBACK_MODEL` | `gemini-flash-lite-latest` | `gemini-flash-lite-latest` (`none` turns it off) |
+| `REQUIRE_DMARC`         | `false`                    | `true`                                           |
 
 ## 6. Turn it on
 
@@ -104,8 +105,12 @@ From then on the workflow runs hourly and plays one turn per day at `DELIVERY_TI
   turned off.
 - **Reply ignored.** It must come from `PLAYER_EMAIL` exactly, arrive after the last email,
   and pass DMARC (see step 2). The run log says how many replies it read.
-- **"Gemini read failed" in the log.** The turn falls back to the keyword reader. Check the
-  key or quota.
+- **"deferred" in the log.** Gemini was overloaded or timing out (even after a retry and the
+  fallback model), so your reply was left for the next scheduled run rather than guessed at.
+  After 12 hours past delivery time, or on a run with **force**, the turn is played with the
+  simpler keyword reader instead, and the email says so.
+- **"Gemini read failed (ai_error)" in the log.** Something other than an outage: check the
+  `GEMINI_API_KEY` secret and the model names. The turn is played with the keyword reader.
 - **Schedule stopped.** GitHub pauses schedules on public repos after 60 days without
   activity, and emails a warning first. Daily state commits keep it active while you play;
   re-enable it from the Actions tab.

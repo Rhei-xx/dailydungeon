@@ -1,7 +1,7 @@
 import { Type, type Schema } from "@google/genai";
 import { ABILITIES, CLASS_IDS } from "../engine/rules";
 import type { DndAbility, DndAction, DndPlayerRolls, DndTurnInput } from "../engine/types";
-import { stripCodeFence, type TextModel } from "./gemini";
+import { AiUnavailableError, stripCodeFence, type TextModel } from "./gemini";
 import { heuristicParse } from "./heuristic-parse";
 import {
   expectsCharacter,
@@ -27,7 +27,9 @@ const SYSTEM = `You read email replies from the single player of a solo Dungeons
 Rules:
 - Use only what the player actually wrote. Never invent a dice total: a roll is null unless the player states a number for it (the engine rolls anything left null).
 - Dice totals already include modifiers: "rolled 15 to hit" means toHit = 15.
+- Bare numbers count in order for the action taken: "attack, rolled 15 and 6" means toHit = 15 and damage = 6; a single number with a sneak is the stealth total, with a search the perception total, with a potion the healing.
 - Pick at most one primary action (attack, sneak, flee, dodge); use "none" if they only search, drink a potion or walk through an exit.
+- Examining, checking, taking or picking up something in the room ("check the glint of metal", "grab the key", "look under the rubble") is a search: search = true.
 - "exit" must be one of the listed exit directions, matched to what the player means ("climb down the rope" -> "down"); otherwise null.
 - While the game is waiting for a character, read the reply as character creation: a name, a class (fighter, rogue or barbarian — map a description like "sneaky" to the closest), and any ability scores they gave. Missing pieces stay null; the dice fill them in.
 - Use intent "restart" only if the player explicitly asks to restart or make a new character mid-adventure.
@@ -216,7 +218,7 @@ export async function parseReply(
       source: "heuristic",
     };
   }
-  if (!model) return heuristicParse(replyText, ctx);
+  if (!model) return { ...heuristicParse(replyText, ctx), fallbackReason: "no_key" };
   try {
     const raw = await model.json({
       system: SYSTEM,
@@ -225,10 +227,12 @@ export async function parseReply(
     });
     return reconcileParsed(JSON.parse(stripCodeFence(raw)), ctx, replyText);
   } catch (err) {
+    const fallbackReason =
+      err instanceof AiUnavailableError && err.transient ? "ai_unavailable" : "ai_error";
     console.warn(
-      "parse-reply: Gemini read failed, using the keyword fallback:",
+      `parse-reply: Gemini read failed (${fallbackReason}), using the keyword fallback:`,
       err instanceof Error ? err.message : err,
     );
-    return heuristicParse(replyText, ctx);
+    return { ...heuristicParse(replyText, ctx), fallbackReason };
   }
 }

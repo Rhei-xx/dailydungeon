@@ -34,6 +34,33 @@ describe("heuristicParse — moves", () => {
     expect(parsed.summary).toBe("Drink a potion, search the room.");
   });
 
+  it("reads bare numbers after 'rolled' in order for the action", () => {
+    expect(heuristicParse("I attack the goblin, rolled 15 and 6", ctx).move?.rolls).toEqual({
+      toHit: 15,
+      damage: 6,
+    });
+    expect(heuristicParse("Sneak past to the east, I rolled a 14", ctx).move?.rolls).toEqual({
+      stealth: 14,
+    });
+    // A labelled number keeps its label; the bare one fills what's left.
+    expect(heuristicParse("attack! rolled 9 damage and 17", ctx).move?.rolls).toEqual({
+      damage: 9,
+      toHit: 17,
+    });
+  });
+
+  it("treats checking or taking something in the room as a search", () => {
+    expect(heuristicParse("check the glint of metal", ctx).move).toMatchObject({
+      action: "none",
+      search: true,
+    });
+    expect(heuristicParse("grab the key from the muck", ctx).move?.search).toBe(true);
+    expect(heuristicParse("take cover behind the rubble", ctx).move).toMatchObject({
+      action: "dodge",
+      search: false,
+    });
+  });
+
   it("only restarts when asked to", () => {
     expect(heuristicParse("restart please", ctx).intent).toBe("restart");
   });

@@ -79,17 +79,18 @@ export function renderMapHtml(
       if (r % 2 === 0 && c % 2 === 0) {
         const room = g.rooms.get(key(x, y));
         if (room) {
-          const fill = room.current ? COLORS.accent : COLORS.card;
+          // Solid fills only, no dark borders: see COLORS.mapRoom.
+          const fill = room.current ? COLORS.accent : COLORS.mapRoom;
           const title = esc(campaign.nodes[room.id].title);
-          inner = `<div title="${title}" style="width:${ROOM_PX - 4}px;height:${ROOM_PX - 4}px;background:${fill};border:2px solid ${COLORS.ink};"></div>`;
+          inner = `<div title="${title}" style="width:${ROOM_PX}px;height:${ROOM_PX}px;background:${fill};"></div>`;
         }
       } else if (r % 2 === 0 && c % 2 === 1) {
         if (g.links.has(linkKey(key(x, y), key(x + 1, y)))) {
-          inner = `<div style="height:${BAR_PX}px;background:${COLORS.muted};"></div>`;
+          inner = `<div style="height:${BAR_PX}px;background:${COLORS.mapPassage};"></div>`;
         }
       } else if (r % 2 === 1 && c % 2 === 0) {
         if (g.links.has(linkKey(key(x, y), key(x, y + 1)))) {
-          inner = `<div style="width:${BAR_PX}px;height:${GAP_PX}px;background:${COLORS.muted};margin:0 auto;"></div>`;
+          inner = `<div style="width:${BAR_PX}px;height:${GAP_PX}px;background:${COLORS.mapPassage};margin:0 auto;"></div>`;
         }
       }
       cells.push(

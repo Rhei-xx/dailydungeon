@@ -16,18 +16,19 @@ deliberately removed; they live in git history if ever needed.
 
 ## Decisions (from the owner's interview, Oct 2026)
 
-| Topic          | Decision                                                                                                           |
-| -------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Content        | DnD solo campaign only (the built-in _Sunken Vault_).                                                              |
-| Replies        | Free text, parsed by **Gemini** into a structured move; keyword fallback.                                          |
-| Email          | HTML body plus a plain-text part. No PDF, no attachments, no images or SVG.                                        |
-| Mail transport | A **dedicated bot Gmail** account: SMTP to send, IMAP to read replies, app password. No domain needed.             |
-| Hosting        | **GitHub Actions** (hourly cron; the script decides if it's due). Proof of concept; a home Docker box comes later. |
-| Pacing         | **One turn per day** at `DELIVERY_TIME` in `TIMEZONE`. The latest reply wins. A forced run plays immediately.      |
-| Dice           | **Mix.** Player-typed totals are used as given; missing rolls are engine-rolled; monsters always roll.             |
-| Narration      | Gemini writes the outcome as a short paragraph; the engine stays authoritative. Fallback is the engine's own text. |
-| State          | One JSON doc, **AES-256-GCM encrypted** (the repo is a public fork), committed to the `game-state` branch.         |
-| Quiet days     | Nothing sent while waiting; one reminder after 3 quiet days.                                                       |
+| Topic          | Decision                                                                                                                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Content        | DnD solo campaign only (the built-in _Sunken Vault_).                                                                                                                           |
+| Replies        | Free text, parsed by **Gemini** into a structured move; keyword fallback.                                                                                                       |
+| Gemini outages | Retry once, then the fallback model. If still down, **defer** the turn to a later run (up to 12h past delivery) rather than play it on a keyword guess; forced runs never wait. |
+| Email          | HTML body plus a plain-text part. No PDF, no attachments, no images or SVG.                                                                                                     |
+| Mail transport | A **dedicated bot Gmail** account: SMTP to send, IMAP to read replies, app password. No domain needed.                                                                          |
+| Hosting        | **GitHub Actions** (hourly cron; the script decides if it's due). Proof of concept; a home Docker box comes later.                                                              |
+| Pacing         | **One turn per day** at `DELIVERY_TIME` in `TIMEZONE`. The latest reply wins. A forced run plays immediately.                                                                   |
+| Dice           | **Mix.** Player-typed totals are used as given; missing rolls are engine-rolled; monsters always roll.                                                                          |
+| Narration      | Gemini writes the outcome as a short paragraph; the engine stays authoritative. Fallback is the engine's own text.                                                              |
+| State          | One JSON doc, **AES-256-GCM encrypted** (the repo is a public fork), committed to the `game-state` branch.                                                                      |
+| Quiet days     | Nothing sent while waiting; one reminder after 3 quiet days.                                                                                                                    |
 
 ## Architecture
 
@@ -57,8 +58,8 @@ GitHub Actions (hourly) → pnpm tick → due today? → IMAP: replies from PLAY
 - `src/cli.ts` — `pnpm tick | preview | state`. Loads `./.env` if present.
 
 Config (env): `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `PLAYER_EMAIL`, `STATE_ENCRYPTION_KEY`
-(required for `tick`); `GEMINI_API_KEY`, `GEMINI_MODEL`, `TIMEZONE`, `DELIVERY_TIME`,
-`REQUIRE_DMARC`, `STATE_DIR` (optional). See `SETUP.md` and `.env.example`.
+(required for `tick`); `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, `TIMEZONE`,
+`DELIVERY_TIME`, `REQUIRE_DMARC`, `STATE_DIR` (optional). See `SETUP.md` and `.env.example`.
 
 ## Working on it
 
@@ -74,8 +75,13 @@ Config (env): `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `PLAYER_EMAIL`, `STATE_ENCRYPT
 - [x] **Proof of concept on GitHub Actions** — strip the SaaS, text-reply engine with
       seeded dice, Gmail IMAP/SMTP, Gemini parse + narrate, HTML emails, encrypted state
       on `game-state`, hourly workflow. _(Oct 2026; awaiting the owner's live setup.)_
-- [ ] **Live verification** — the owner sets up the bot Gmail, secrets and Actions, and
-      plays a few real turns (see the SETUP.md checklist).
+- [x] **Live verification** — set up and played (Oct–Nov 2026). Findings, fixed Nov 2026:
+      every sampled turn hit Gemini 503 "high demand" or 30s timeouts, so replies were read
+      by the keyword fallback (dropped dice totals, "check the glint" → no move); the move
+      example "I rolled 15 to hit and 6 damage" read like a result, not something to write;
+      the map's cream rooms vanished in dark-mode mail clients.
+- [ ] **Faster schedule** — GitHub runs the "hourly" cron only every 4–8 hours, so turns
+      arrive hours after `DELIVERY_TIME`. An external trigger (or the home box) would fix it.
 - [ ] **Home Docker box** — run `pnpm tick` from cron in a container with `STATE_DIR` on
       a volume (no git commit step).
 - [ ] **Balance pass** — engine-rolled monster attacks make level-1 fights lethal (two giant

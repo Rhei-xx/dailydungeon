@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { SUNKEN_VAULT_CAMPAIGN } from "../engine/campaign";
 import { applyCharacterSheet } from "../engine/engine";
 import { scriptedDice } from "../engine/dice";
-import type { TextModel } from "./gemini";
+import { AiUnavailableError, type TextModel } from "./gemini";
 import { parseReply, reconcileParsed } from "./parse-reply";
 import { buildParseContext, type ParseContext } from "./reply-types";
 
@@ -154,13 +154,23 @@ describe("parseReply", () => {
     expect(model.json.mock.calls[0][0].prompt).toContain("Exits: north, east, west");
   });
 
-  it("falls back to the keyword parser when the model fails", async () => {
+  it("falls back to the keyword parser when the model fails, saying why", async () => {
     const parsed = await parseReply(fakeModel(new Error("quota")), "attack the rat", ctx);
     expect(parsed).toMatchObject({
       intent: "move",
       source: "heuristic",
+      fallbackReason: "ai_error",
       move: { action: "attack" },
     });
+
+    const busy = await parseReply(
+      fakeModel(new AiUnavailableError("503 high demand", true)),
+      "attack the rat",
+      ctx,
+    );
+    expect(busy.fallbackReason).toBe("ai_unavailable");
+
+    expect((await parseReply(null, "attack the rat", ctx)).fallbackReason).toBe("no_key");
   });
 
   it("doesn't call the model for an empty reply", async () => {
