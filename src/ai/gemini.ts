@@ -65,27 +65,43 @@ export async function callWithFallback<T>(
     delaysMs?: number[];
     sleep?: (ms: number) => Promise<void>;
     log?: (message: string) => void;
+    /** What the call is for ("read reply", "narrate"), shown in the log lines. */
+    label?: string;
+    /** Clock for the timing in the log; replaceable in tests. */
+    now?: () => number;
   } = {},
 ): Promise<T> {
   const delays = opts.delaysMs ?? RETRY_DELAYS_MS;
   const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
-  const log = opts.log ?? ((m: string) => console.warn(m));
+  const log = opts.log ?? ((m: string) => console.log(m));
+  const now = opts.now ?? Date.now;
+  const tag = opts.label ? `gemini (${opts.label})` : "gemini";
   let lastError: unknown;
   let allTransient = true;
+  let calls = 0;
   for (const model of models) {
     for (let attempt = 0; attempt <= delays.length; attempt++) {
+      const started = now();
+      calls += 1;
       try {
-        return await call(model);
+        const result = await call(model);
+        // Every successful call says which model answered, so the Actions log
+        // shows how often the main model was busy and the fallback stepped in.
+        log(`${tag}: answered by ${model} (call ${calls}, ${now() - started} ms)`);
+        return result;
       } catch (err) {
         lastError = err;
         const transient = isTransientAiError(err);
         if (!transient) allTransient = false;
-        log(`gemini: ${model} attempt ${attempt + 1} failed: ${describeError(err)}`);
+        log(
+          `${tag}: ${model} attempt ${attempt + 1} failed after ${now() - started} ms: ${describeError(err)}`,
+        );
         if (!transient || attempt === delays.length) break;
         await sleep(delays[attempt]);
       }
     }
   }
+  log(`${tag}: no answer after ${calls} calls (${models.join(", ")})`);
   throw new AiUnavailableError(
     `Gemini unavailable (tried ${models.join(", ")}): ${describeError(lastError)}`,
     allTransient,
@@ -113,36 +129,44 @@ export function createGemini(config: GeminiConfig): TextModel {
   const models = geminiModels(config);
   return {
     json({ system, prompt, schema }) {
-      return callWithFallback(models, async (model) => {
-        const response = await ai.models.generateContent({
-          model,
-          contents: prompt,
-          config: {
-            systemInstruction: system,
-            temperature: 0,
-            responseMimeType: "application/json",
-            responseSchema: schema,
-            abortSignal: AbortSignal.timeout(TIMEOUT_MS),
-          },
-        });
-        return response.text ?? "";
-      });
+      return callWithFallback(
+        models,
+        async (model) => {
+          const response = await ai.models.generateContent({
+            model,
+            contents: prompt,
+            config: {
+              systemInstruction: system,
+              temperature: 0,
+              responseMimeType: "application/json",
+              responseSchema: schema,
+              abortSignal: AbortSignal.timeout(TIMEOUT_MS),
+            },
+          });
+          return response.text ?? "";
+        },
+        { label: "read reply" },
+      );
     },
     text({ system, prompt }) {
-      return callWithFallback(models, async (model) => {
-        const response = await ai.models.generateContent({
-          model,
-          contents: prompt,
-          config: {
-            systemInstruction: system,
-            temperature: 0.9,
-            abortSignal: AbortSignal.timeout(TIMEOUT_MS),
-          },
-        });
-        const text = response.text ?? "";
-        if (!text.trim()) throw new Error("empty response");
-        return text;
-      });
+      return callWithFallback(
+        models,
+        async (model) => {
+          const response = await ai.models.generateContent({
+            model,
+            contents: prompt,
+            config: {
+              systemInstruction: system,
+              temperature: 0.9,
+              abortSignal: AbortSignal.timeout(TIMEOUT_MS),
+            },
+          });
+          const text = response.text ?? "";
+          if (!text.trim()) throw new Error("empty response");
+          return text;
+        },
+        { label: "narrate" },
+      );
     },
   };
 }

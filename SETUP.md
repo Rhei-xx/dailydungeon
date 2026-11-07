@@ -105,6 +105,11 @@ From then on the workflow runs hourly and plays one turn per day at `DELIVERY_TI
   turned off.
 - **Reply ignored.** It must come from `PLAYER_EMAIL` exactly, arrive after the last email,
   and pass DMARC (see step 2). The run log says how many replies it read.
+- **Which Gemini model answered?** Each call logs a line such as
+  `gemini (read reply): answered by gemini-flash-latest (call 1, 2300 ms)`. If it says
+  `gemini-flash-lite-latest` or `call 3`, the main model was busy. Lines starting
+  `gemini (...): ... attempt N failed` show why, and the run log's timestamps (UTC) show when,
+  so you can compare busy and quiet times of day before changing `DELIVERY_TIME`.
 - **"deferred" in the log.** Gemini was overloaded or timing out (even after a retry and the
   fallback model), so your reply was left for the next scheduled run rather than guessed at.
   After 12 hours past delivery time, or on a run with **force**, the turn is played with the
